@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>상품설명 확인 및 상담 신청</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, "Noto Sans KR", sans-serif;
+      background: #f4f7f7;
+      color: #222;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 30px 18px 60px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 28px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.07);
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-top: 0;
+      color: #006d61;
+    }
+
+    h2 {
+      font-size: 20px;
+      margin-top: 0;
+    }
+
+    .info {
+      background: #edf8f6;
+      padding: 16px;
+      border-radius: 12px;
+      line-height: 1.7;
+      margin-top: 15px;
+    }
+
+    label {
+      display: block;
+      margin-top: 18px;
+      margin-bottom: 7px;
+      font-weight: bold;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+
+    .check {
+      display: flex;
+      gap: 10px;
+      margin: 16px 0;
+      line-height: 1.5;
+    }
+
+    .check input {
+      width: auto;
+      margin-top: 5px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 180px;
+      border: 1px solid #bbb;
+      border-radius: 10px;
+      background: #fff;
+      touch-action: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 12px;
+      margin-top: 12px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: #008577;
+      color: white;
+    }
+
+    .secondary {
+      background: #e9eeee;
+      color: #333;
+    }
+
+    .notice {
+      font-size: 13px;
+      color: #666;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="card">
+    <h1>상품설명 확인 및 상담 신청</h1>
+
+    <p>
+      고객님께서 상품의 주요 내용을 확인하고
+      상담 진행을 신청하는 페이지입니다.
+    </p>
+
+    <div class="info">
+      ✔ 상품조건은 최종 심사 결과에 따라 달라질 수 있습니다.<br>
+      ✔ 서명만으로 대출 승인이 확정되는 것은 아닙니다.<br>
+      ✔ 실제 비용·조건·진행절차를 확인한 후 진행해주세요.
+    </div>
+  </div>
+
+
+  <div class="card">
+
+    <h2>1. 고객 정보</h2>
+
+    <label>성명</label>
+    <input id="name" type="text" placeholder="성명을 입력해주세요">
+
+    <label>연락처</label>
+    <input id="phone" type="tel" placeholder="010-0000-0000">
+
+    <label>희망 대출금액</label>
+    <input id="amount" type="text" placeholder="예: 2,000만원">
+
+    <label>희망 기간</label>
+
+    <select id="period">
+      <option value="">선택해주세요</option>
+      <option>1년</option>
+      <option>3년</option>
+      <option>5년</option>
+    </select>
+
+  </div>
+
+
+  <div class="card">
+
+    <h2>2. 필수 확인</h2>
+
+    <label class="check">
+      <input id="agree1" type="checkbox">
+      <span>
+        상품의 주요 내용을 확인했습니다.
+      </span>
+    </label>
+
+    <label class="check">
+      <input id="agree2" type="checkbox">
+      <span>
+        최종 승인 여부와 한도·금리는 심사 후 결정됨을 확인했습니다.
+      </span>
+    </label>
+
+    <label class="check">
+      <input id="agree3" type="checkbox">
+      <span>
+        실제 진행 전 비용 및 상품조건을 확인하겠습니다.
+      </span>
+    </label>
+
+  </div>
+
+
+  <div class="card">
+
+    <h2>3. 전자서명</h2>
+
+    <p class="notice">
+      아래 칸에 손가락이나 마우스로 서명해주세요.
+    </p>
+
+    <canvas id="signature"></canvas>
+
+    <button class="secondary" onclick="clearSignature()">
+      서명 다시하기
+    </button>
+
+  </div>
+
+
+  <button class="primary" onclick="submitForm()">
+    신청서 제출하기
+  </button>
+
+</div>
+
+
+<script>
+
+const canvas = document.getElementById("signature");
+const ctx = canvas.getContext("2d");
+
+let drawing = false;
+
+function resizeCanvas() {
+  canvas.width = canvas.offsetWidth;
+  canvas.height = 180;
+
+  ctx.lineWidth = 2;
+  ctx.lineCap = "round";
+  ctx.strokeStyle = "#111";
+}
+
+resizeCanvas();
+
+function position(e) {
+
+  const rect = canvas.getBoundingClientRect();
+
+  if (e.touches) {
+    return {
+      x: e.touches[0].clientX - rect.left,
+      y: e.touches[0].clientY - rect.top
+    };
+  }
+
+  return {
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top
+  };
+
+}
+
+function start(e) {
+  drawing = true;
+
+  const p = position(e);
+
+  ctx.beginPath();
+  ctx.moveTo(p.x, p.y);
+
+}
+
+function draw(e) {
+
+  if (!drawing) return;
+
+  e.preventDefault();
+
+  const p = position(e);
+
+  ctx.lineTo(p.x, p.y);
+  ctx.stroke();
+
+}
+
+function stop() {
+  drawing = false;
+}
+
+canvas.addEventListener("mousedown", start);
+canvas.addEventListener("mousemove", draw);
+canvas.addEventListener("mouseup", stop);
+canvas.addEventListener("mouseleave", stop);
+
+canvas.addEventListener("touchstart", start);
+canvas.addEventListener("touchmove", draw);
+canvas.addEventListener("touchend", stop);
+
+
+function clearSignature() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+}
+
+
+function submitForm() {
+
+  const name = document.getElementById("name").value;
+  const phone = document.getElementById("phone").value;
+  const amount = document.getElementById("amount").value;
+  const period = document.getElementById("period").value;
+
+  const agree1 = document.getElementById("agree1").checked;
+  const agree2 = document.getElementById("agree2").checked;
+  const agree3 = document.getElementById("agree3").checked;
+
+  if (!name || !phone || !amount || !period) {
+    alert("모든 정보를 입력해주세요.");
+    return;
+  }
+
+  if (!agree1 || !agree2 || !agree3) {
+    alert("필수 확인사항에 동의해주세요.");
+    return;
+  }
+
+  alert(
+    "작성 완료!\n\n다음 단계에서 텔레그램 자동 전송을 연결합니다."
+  );
+
+}
+
+</script>
+
+</body>
+</html>
